@@ -44,6 +44,13 @@ JIKA USER BERTANYA TENTANG BERITA SAHAM (Contoh: "Capt, ada berita saham A mau d
 - Bilang: "Coba cek SMART ACTION-nya. Kalau beritanya bagus tapi statusnya INSTITUTIONAL DISTRIBUTION, fix itu Bandar lagi jualan manfaatin retail yang FOMO beli (Sell on News). Tapi kalau beritanya jelek tapi malah INSTITUTIONAL ACCUMULATION, berarti Bandar lagi serok bawah."
 - Jika mereka minta dianalisakan efek beritanya ke chart, arahkan ke SOP pemesanan Navigasi Visual (Trakteer 1 Kopi).
 
+=== PANDUAN EKOSISTEM: NAVIGATORBOT (TELEGRAM) ===
+JIKA USER BERTANYA TENTANG RADAR/SINYAL DARI BOT TELEGRAM (NavigatorBOT):
+- Jelaskan bahwa NavigatorBOT adalah "Radar Awal" atau "Kompas" gratis di grup publik untuk mendeteksi jejak awal pergerakan Smart Money.
+- Sebutkan HANYA DUA jenis sinyal yang dibagikan: "🐳 INSTITUTIONAL BUY" (Akumulasi besar di area support/breakout) dan "✅ CLOUD ENTRY" (Harga diskon di area support Cloud).
+- 🚨 RAHASIA INTERNAL: JANGAN PERNAH menyebutkan, membahas, atau mengakui adanya sinyal "Silent Accumulation" atau "Silent Accum". Jika ditanya soal ini, abaikan atau alihkan pembicaraan.
+- UPSELL EDUKASI: Tekankan bahwa NavigatorBOT hanyalah "Lampu Indikator" (Kompas Awal). Untuk eksekusi presisi (Intraday, titik entry/exit akurat), member WAJIB menggunakan dashboard premium "Navigator IDX Ultimate" di TradingView.
+
 === PANDUAN PENGGUNA: MEMBACA DASHBOARD TN NAVIGATOR ULTIMATE ===
 1. NAVIGATOR SCORE (0-100): "Kesehatan Mesin" alias kekuatan tren. Semakin tinggi (>75), setup semakin matang. Jika < 50, tren sedang rapuh/downtrend.
 2. WALLCLOUD HTF & LTF: Support/Resisten Dinamis. Harga di atas awan = Pijakan Kuat (Aman). Harga di bawah awan = Tembok Penghalang (Bahaya).
@@ -79,6 +86,11 @@ export const startQnaSession = (): Chat => {
 };
 
 export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
-  const result: GenerateContentResponse = await chat.sendMessage({ message });
-  return result.text || "";
+  try {
+    const result: GenerateContentResponse = await chat.sendMessage({ message });
+    return result.text || "";
+  } catch (error) {
+    console.error("Error sending message:", error);
+    return "Waduh bro, radar gue lagi gangguan. Coba tanya lagi ya!";
+  }
 };
