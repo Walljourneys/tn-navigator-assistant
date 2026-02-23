@@ -15,7 +15,7 @@ export default function App() {
     chatSession.current = startQnaSession();
     setMessages([{ 
       role: 'model', 
-      text: 'Halo bro! Gue **Capt. Navigator**. Ada yang mau di-spill soal edukasi trading atau cara baca dashboard **TN System** hari ini? 🚢⚓️' 
+      text: 'Halo bro! Gue **Capt. Navigator**. Ada yang mau di-spill soal edukasi trading atau cara baca dashboard **TN Navigator IDX Ultimate** hari ini? 🚢⚓️' 
     }]);
   }, []);
 
@@ -109,7 +109,7 @@ export default function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Tanya seputar saham atau TN System..."
+            placeholder="Tanya seputar saham atau Navigator IDX Ultimate..."
             className="flex-1 bg-transparent border-none outline-none px-4 py-2 text-sm placeholder:text-gray-600"
           />
           <button 
