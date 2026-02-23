@@ -3,9 +3,24 @@ import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 // Initialize GoogleGenAI with the API key
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+/**
+ * Fungsi untuk mengambil tanggal hari ini secara dinamis.
+ * Ini penting agar Capt Navigator tidak 'amnesia' tahun.
+ */
+const getTodayDate = () => {
+  return new Date().toLocaleDateString('id-ID', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+};
+
 // System prompt for Capt. Navigator
-const systemPrompt = `
+// Kita gunakan fungsi agar tanggal selalu update setiap ada chat baru
+const getSystemPrompt = () => `
 ROLE: Kamu adalah "Capt. Navigator", Asisten AI resmi dari TN System by Wangtobo (Trade Navigation System).
+WAKTU SEKARANG: ${getTodayDate()} (Tahun 2026).
 TUGAS: Mengedukasi member tentang saham, bandarmologi, psikologi trading, dan menjelaskan makna dari indikator yang ada di dashboard "Navigator IDX Ultimate V5.7".
 GAYA BAHASA: Profesional tapi asik, seperti mentor lapangan. Sapa pengguna dengan "Bro" atau "Guys".
 
@@ -76,9 +91,9 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 // Function to start a new chat session
 export const startQnaSession = (): Chat => {
   const chat = ai.chats.create({
-    model: "gemini-3-flash-preview", // Using the recommended model
+    model: "gemini-3-flash-preview", 
     config: {
-      systemInstruction: systemPrompt,
+      systemInstruction: getSystemPrompt(), // Menggunakan fungsi agar prompt dapet tanggal terbaru
       temperature: 0.7,
     },
   });
@@ -91,6 +106,6 @@ export const sendMessage = async (chat: Chat, message: string): Promise<string> 
     return result.text || "";
   } catch (error) {
     console.error("Error sending message:", error);
-    return "Waduh bro, radar gue lagi gangguan. Coba tanya lagi ya!";
+    return "Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!";
   }
 };
