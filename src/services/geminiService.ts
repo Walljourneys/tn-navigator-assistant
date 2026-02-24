@@ -1,7 +1,6 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// PAKAI INI: Biar Vite & Vercel bisa baca kuncinya di Browser
-// Tambahkan (import.meta as any)
+// Pastikan (import.meta as any) agar TypeScript tidak komplain
 const ai = new GoogleGenAI({ 
   apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || "" 
 });
@@ -85,23 +84,22 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 `;
 
 export const startQnaSession = (): Chat => {
-  const chat = ai.chats.create({
-    // GANTI baris ini, jangan Gemini 3!
-    model: "gemini-1.5-flash", 
+  return ai.chats.create({
+    model: "gemini-1.5-flash", // MODEL AKTIF & STABIL
     config: {
       systemInstruction: getSystemPrompt(),
       temperature: 0.7,
     },
   });
-  return chat;
 };
 
+// Fungsi ini namanya 'sendMessage', BUKAN 'sendMessageStream'
 export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
   try {
     const result: GenerateContentResponse = await chat.sendMessage({ message });
     return result.text || "";
   } catch (error) {
-    console.error("Error sending message:", error);
-    return "Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!";
+    console.error("Error Radar:", error);
+    return "Waduh bro, radar lagi gangguan. Cek API Key atau Quota lu!";
   }
 };
