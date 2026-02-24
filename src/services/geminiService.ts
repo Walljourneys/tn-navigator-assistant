@@ -1,6 +1,6 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Pastikan (import.meta as any) agar TypeScript tidak komplain
+// PAKAI INI: Biar Vite & Vercel bisa baca kuncinya di Browser
 const ai = new GoogleGenAI({ 
   apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || "" 
 });
@@ -11,8 +11,6 @@ const getTodayDate = () => {
   });
 };
 
-// System prompt for Capt. Navigator
-// Kita gunakan fungsi agar tanggal selalu update setiap ada chat baru
 const getSystemPrompt = () => `
 ROLE: Kamu adalah "Capt. Navigator", Asisten AI resmi dari TN System by Wangtobo (Trade Navigation System).
 WAKTU SEKARANG: ${getTodayDate()} (Tahun 2026).
@@ -64,6 +62,7 @@ JIKA USER BERTANYA TENTANG RADAR/SINYAL DARI BOT TELEGRAM (NavigatorBOT):
 === PANDUAN PENGGUNA: MEMBACA DASHBOARD TN NAVIGATOR ULTIMATE ===
 1. NAVIGATOR SCORE (0-100): "Kesehatan Mesin" alias kekuatan tren. Semakin tinggi (>75), setup semakin matang. Jika < 50, tren sedang rapuh/downtrend.
 2. WALLCLOUD HTF & LTF: Support/Resisten Dinamis. Harga di atas awan = Pijakan Kuat (Aman). Harga di bawah awan = Tembok Penghalang (Bahaya).
+   - 💡 STRATEGI ENTRY: Ingatkan bahwa WallCloud adalah **ZONA/AREA**, bukan satu titik angka mati. Disarankan untuk **Entry secara bertahap (cicil)** di dalam area WallCloud saat terjadi pullback/retest untuk mendapatkan rata-rata harga (average) yang bagus dan aman.
 3. VALUATION MAP:
    - Accumulation Box: Harga diskon/murah, pantau untuk reversal.
    - Fair Value: Magnet harga wajar.
@@ -85,7 +84,7 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 
 export const startQnaSession = (): Chat => {
   return ai.chats.create({
-    model: "gemini-2.5-flash", // MODEL AKTIF & STABIL
+    model: "gemini-2.5-flash", 
     config: {
       systemInstruction: getSystemPrompt(),
       temperature: 0.7,
@@ -93,13 +92,12 @@ export const startQnaSession = (): Chat => {
   });
 };
 
-// Fungsi ini namanya 'sendMessage', BUKAN 'sendMessageStream'
 export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
   try {
     const result: GenerateContentResponse = await chat.sendMessage({ message });
     return result.text || "";
   } catch (error) {
     console.error("Error Radar:", error);
-    return "Waduh bro, radar lagi gangguan. Cek API Key atau Quota lu!";
+    return "Waduh bro, radar lagi gangguan. Coba ulangi pertanyaanya ya!";
   }
 };
