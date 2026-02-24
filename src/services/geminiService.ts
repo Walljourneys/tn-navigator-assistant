@@ -1,24 +1,14 @@
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
+import { GoogleGenerativeAI, ChatSession, GenerateContentResponse } from "@google/generative-ai";
 
-// Initialize GoogleGenAI with the API key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// 1. Inisialisasi menggunakan nama class yang benar: GoogleGenerativeAI
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "");
 
-/**
- * Fungsi untuk mengambil tanggal hari ini secara dinamis.
- * Ini penting agar Capt Navigator tidak 'amnesia' tahun.
- */
 const getTodayDate = () => {
   return new Date().toLocaleDateString('id-ID', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
   });
 };
 
-/**
- * Fungsi Helper untuk mengonversi gambar Base64 ke format yang dimengerti Gemini.
- */
 function fileToGenerativePart(base64Str: string) {
   return {
     inlineData: {
@@ -28,7 +18,6 @@ function fileToGenerativePart(base64Str: string) {
   };
 }
 
-// System prompt for Capt. Navigator
 const getSystemPrompt = () => `
 ROLE: Kamu adalah "Capt. Navigator", Asisten AI resmi dari TN System by Wangtobo (Trade Navigation System).
 WAKTU SEKARANG: ${getTodayDate()} (Tahun 2026).
@@ -99,54 +88,36 @@ JIKA USER BERTANYA TENTANG RADAR/SINYAL DARI BOT TELEGRAM (NavigatorBOT):
 Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika user bertanya tentang seputar pasar modal, saham, kategori jenis saham, saham syariah, istilah pasar modal seperti: Broksum, Bid/Offer, Haka/Haki, FOMO, dll.
 `;
 
-// Function to start a new chat session
-export const startQnaSession = (): Chat => {
-  return ai.chats.create({
-    model: "gemini-1.5-flash", // Menggunakan 1.5-flash yang sangat stabil untuk Vision & Streaming
-    config: {
-      systemInstruction: getSystemPrompt(),
-      temperature: 0.7,
-    },
+export const startQnaSession = (): ChatSession => {
+  // 2. Gunakan genAI.getGenerativeModel
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    systemInstruction: getSystemPrompt(),
+  });
+  
+  return model.startChat({
+    history: [],
+    generationConfig: { temperature: 0.7 },
   });
 };
 
-/**
- * FUNGSI UTAMA BARU: Mengirim pesan dengan dukungan Streaming dan Gambar (Vision).
- */
-export const sendMessageStream = async (
-  chat: any, // Kita ubah jadi 'any' agar TypeScript tidak protes soal tipe SDK
-  message: string, 
-  image: string | null, 
-  onChunk: (text: string) => void
-) => {
+export const sendMessageStream = async (chat: any, message: string, image: string | null, onChunk: (text: string) => void) => {
   try {
     const parts: any[] = [message];
-    
-    if (image) {
-      parts.push(fileToGenerativePart(image));
-    }
+    if (image) parts.push(fileToGenerativePart(image));
 
-    // PERBAIKAN: Masukkan ke dalam objek { message: parts }
-    const result = await chat.sendMessageStream({ message: parts });
+    // Pastiin chat session-nya ada
+    if (!chat) throw new Error("Chat session pingsan, Bro!");
+
+    const result = await chat.sendMessageStream(parts);
     
-    // PERBAIKAN: Looping langsung ke 'result' (hapus .stream)
-    for await (const chunk of result) {
+    for await (const chunk of result.stream) {
       const chunkText = chunk.text();
-      onChunk(chunkText); 
+      if (chunkText) onChunk(chunkText);
     }
-  } catch (error) {
-    console.error("Error streaming message:", error);
+  } catch (error: any) {
+    // INI PENTING: Liat di F12 Console browser lu tulisan merahnya apa
+    console.error("ALASAN CAPT MOGOK:", error);
     onChunk("Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!");
-  }
-};
-
-// Tetap pertahankan fungsi lama agar tidak merusak UI yang sekarang sebelum di-update
-export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
-  try {
-    const result: GenerateContentResponse = await chat.sendMessage({ message });
-    return result.text || "";
-  } catch (error) {
-    console.error("Error sending message:", error);
-    return "Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!";
   }
 };
