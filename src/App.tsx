@@ -54,7 +54,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#070707] text-gray-100 flex flex-col items-center p-4 font-sans">
       
-      {/* HEADER - Nuansa Gold/Premium */}
+      {/* HEADER */}
       <div className="w-full max-w-2xl flex items-center justify-between mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="bg-[#c5a059] p-2 rounded-xl">
@@ -88,14 +88,15 @@ export default function App() {
                 <div className={`relative group p-4 rounded-2xl text-sm leading-relaxed border backdrop-blur-sm ${
                   msg.role === 'user' ? 'bg-blue-600/20 border-blue-500/30' : 'bg-white/5 border-white/10'
                 }`}>
-                  <div className="prose prose-invert prose-yellow max-w-none whitespace-pre-wrap">
+                  {/* FIX: Hapus whitespace-pre-wrap karena bentrok dengan Markdown */}
+                  <div className="prose prose-invert prose-yellow max-w-none">
                     <Markdown>{msg.text}</Markdown>
                   </div>
 
                   {msg.role === 'model' && (
                     <button 
                       onClick={() => handleCopy(msg.text, idx)}
-                      className="absolute -bottom-8 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute -top-2 -right-2 p-1.5 bg-black border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-xl"
                     >
                       {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500 hover:text-[#c5a059]" />}
                     </button>
@@ -107,8 +108,8 @@ export default function App() {
         </AnimatePresence>
         
         {loading && (
-          <div className="flex items-center gap-2 text-[#c5a059] text-xs animate-pulse">
-            <Ship size={14} className="animate-bounce" /> Capt lagi neropong market... 🧭
+          <div className="flex items-center gap-2 text-[#c5a059] text-xs animate-pulse ml-12">
+            <Ship size={14} className="animate-bounce" /> Capt lagi ngeracik data... 🧭
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -145,6 +146,10 @@ export default function App() {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(197, 160, 89, 0.2); border-radius: 10px; }
+        /* Perbaikan spasi antar paragraf di Markdown */
+        .prose p { margin-bottom: 0.75rem !important; margin-top: 0.75rem !important; }
+        .prose p:first-child { margin-top: 0 !important; }
+        .prose p:last-child { margin-bottom: 0 !important; }
       `}</style>
     </div>
   );
