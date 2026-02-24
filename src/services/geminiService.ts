@@ -1,23 +1,23 @@
-import { GoogleGenerativeAI, ChatSession } from "@google/generative-ai";
+import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// 1. Inisialisasi - Pastikan penamaan class-nya konsisten
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "");
+// Initialize GoogleGenAI with the API key
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+/**
+ * Fungsi untuk mengambil tanggal hari ini secara dinamis.
+ * Ini penting agar Capt Navigator tidak 'amnesia' tahun.
+ */
 const getTodayDate = () => {
   return new Date().toLocaleDateString('id-ID', { 
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
   });
 };
 
-function fileToGenerativePart(base64Str: string) {
-  return {
-    inlineData: {
-      data: base64Str.split(",")[1],
-      mimeType: base64Str.split(",")[0].split(":")[1].split(";")[0]
-    },
-  };
-}
-
+// System prompt for Capt. Navigator
+// Kita gunakan fungsi agar tanggal selalu update setiap ada chat baru
 const getSystemPrompt = () => `
 ROLE: Kamu adalah "Capt. Navigator", Asisten AI resmi dari TN System by Wangtobo (Trade Navigation System).
 WAKTU SEKARANG: ${getTodayDate()} (Tahun 2026).
@@ -88,50 +88,24 @@ JIKA USER BERTANYA TENTANG RADAR/SINYAL DARI BOT TELEGRAM (NavigatorBOT):
 Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika user bertanya tentang seputar pasar modal, saham, kategori jenis saham, saham syariah, istilah pasar modal seperti: Broksum, Bid/Offer, Haka/Haki, FOMO, dll.
 `;
 
-export const startQnaSession = (): ChatSession => {
-  // Cek apakah API Key kebaca di browser
-  if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
-    console.error("🚨 KUNCI KAPAL ILANG! API Key nggak kebaca. Cek .env lu!");
-  }
-
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
-    systemInstruction: getSystemPrompt(),
+// Function to start a new chat session
+export const startQnaSession = (): Chat => {
+  const chat = ai.chats.create({
+    model: "gemini-3-flash-preview", 
+    config: {
+      systemInstruction: getSystemPrompt(), // Menggunakan fungsi agar prompt dapet tanggal terbaru
+      temperature: 0.7,
+    },
   });
-  
-  return model.startChat({
-    history: [],
-    generationConfig: { temperature: 0.7 },
-  });
+  return chat;
 };
 
-export const sendMessageStream = async (
-  chat: ChatSession, 
-  message: string, 
-  image: string | null, 
-  onChunk: (text: string) => void
-) => {
+export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
   try {
-    // Bangun parts: Gambar dulu (kalau ada), baru Teks
-    const parts: any[] = [];
-    if (image) {
-      parts.push(fileToGenerativePart(image));
-    }
-    parts.push(message);
-
-    // KIRIM LANGSUNG ARRAY PARTS
-    const result = await chat.sendMessageStream(parts);
-    
-    // LOOPING STREAM
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      if (chunkText) {
-        onChunk(chunkText); 
-      }
-    }
-  } catch (error: any) {
-    // LIAT DI F12 CONSOLE: Ini bakal kasih tau kenapa dia mogok
-    console.error("🚨 ALASAN CAPT MOGOK:", error.message || error);
-    onChunk("Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!");
+    const result: GenerateContentResponse = await chat.sendMessage({ message });
+    return result.text || "";
+  } catch (error) {
+    console.error("Error sending message:", error);
+    return "Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!";
   }
 };
