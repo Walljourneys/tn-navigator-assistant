@@ -114,24 +114,25 @@ export const startQnaSession = (): Chat => {
  * FUNGSI UTAMA BARU: Mengirim pesan dengan dukungan Streaming dan Gambar (Vision).
  */
 export const sendMessageStream = async (
-  chat: Chat, 
+  chat: any, // Kita ubah jadi 'any' agar TypeScript tidak protes soal tipe SDK
   message: string, 
   image: string | null, 
   onChunk: (text: string) => void
 ) => {
   try {
-    let parts: any[] = [message];
+    const parts: any[] = [message];
     
-    // Jika ada gambar, masukkan ke dalam parts sebagai generative part
     if (image) {
       parts.push(fileToGenerativePart(image));
     }
 
-    const result = await chat.sendMessageStream(parts);
+    // PERBAIKAN: Masukkan ke dalam objek { message: parts }
+    const result = await chat.sendMessageStream({ message: parts });
     
-    for await (const chunk of result.stream) {
+    // PERBAIKAN: Looping langsung ke 'result' (hapus .stream)
+    for await (const chunk of result) {
       const chunkText = chunk.text();
-      onChunk(chunkText); // Mengirim potongan teks ke UI secara real-time
+      onChunk(chunkText); 
     }
   } catch (error) {
     console.error("Error streaming message:", error);

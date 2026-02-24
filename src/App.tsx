@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { startQnaSession, sendMessageStream } from './services/geminiService'; // Update import ke Stream
+import { startQnaSession, sendMessageStream } from './services/geminiService';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Ship, Anchor, User, Plus, Copy, Check, X, Image as ImageIcon } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Send, Ship, Anchor, User, Plus, Copy, Check, X, Image as ImageIcon } fr
 export default function App() {
   const [messages, setMessages] = useState<{ role: string, text: string, image?: string }[]>([]);
   const [input, setInput] = useState('');
-  const [image, setImage] = useState<string | null>(null); // State untuk gambar
+  const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   
@@ -28,14 +28,12 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fungsi Copy ke Clipboard
   const handleCopy = (text: string, index: number) => {
     navigator.clipboard.writeText(text);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  // Fungsi Handle Upload Gambar
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -53,20 +51,16 @@ export default function App() {
     const userMsg = input.trim();
     const userImg = image;
     
-    // 1. Tambah pesan user ke layar
     setMessages(prev => [...prev, { role: 'user', text: userMsg, image: userImg || undefined }]);
     
-    // Reset Input
     setInput('');
     setImage(null);
     setLoading(true);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
-    // 2. Siapkan wadah kosong untuk jawaban Streaming Capt
     setMessages(prev => [...prev, { role: 'model', text: '' }]);
 
     try {
-      // 3. Panggil fungsi Stream dari service
       await sendMessageStream(chatSession.current, userMsg, userImg, (chunk) => {
         setMessages(prev => {
           const newMessages = [...prev];
@@ -77,10 +71,15 @@ export default function App() {
           };
           return newMessages;
         });
-        setLoading(false); // Matikan loading saat chunk mulai datang
+        setLoading(false);
       });
     } catch (error) {
-      setMessages(prev => [...prev.slice(0, -1), { role: 'model', text: 'Waduh bro, radar gue lagi gangguan. Ngopi dulu bentar, coba tanya lagi ya!' }]);
+      console.error(error);
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = { role: 'model', text: 'Waduh bro, radar gue lagi gangguan. Ngopi dulu bentar, coba tanya lagi ya!' };
+        return newMessages;
+      });
       setLoading(false);
     }
   };
@@ -122,16 +121,17 @@ export default function App() {
                   : 'bg-white/5 border-white/10 text-gray-200 rounded-tl-none'
                 }`}>
                   
-                  {/* Tampilkan Gambar jika ada */}
                   {msg.image && (
                     <img src={msg.image} alt="Upload" className="max-w-full h-auto rounded-lg mb-3 border border-white/10" />
                   )}
 
-                  <Markdown className="prose prose-invert prose-yellow max-w-none prose-p:leading-relaxed prose-strong:text-[#c5a059] whitespace-pre-wrap">
-                    {msg.text}
-                  </Markdown>
+                  {/* PERBAIKAN: className dipindah ke div pembungkus */}
+                  <div className="prose prose-invert prose-yellow max-w-none prose-p:leading-relaxed prose-strong:text-[#c5a059] whitespace-pre-wrap">
+                    <Markdown>
+                      {msg.text}
+                    </Markdown>
+                  </div>
 
-                  {/* Tombol Copy (Hanya muncul di respon AI) */}
                   {msg.role === 'model' && msg.text.length > 0 && (
                     <button 
                       onClick={() => handleCopy(msg.text, idx)}
@@ -165,7 +165,6 @@ export default function App() {
 
       {/* Input Area */}
       <div className="w-full max-w-2xl mt-4 pb-4">
-        {/* Preview Gambar Sebelum Kirim */}
         {image && (
           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative inline-block mb-3 ml-2">
             <img src={image} alt="Preview" className="w-20 h-20 object-cover rounded-xl border-2 border-[#c5a059]" />
@@ -180,7 +179,6 @@ export default function App() {
 
         <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-[#c5a059]/50 transition-all duration-300">
           
-          {/* Tombol + (Upload) */}
           <button 
             onClick={() => fileInputRef.current?.click()}
             className="p-2.5 rounded-xl hover:bg-white/10 text-gray-500 hover:text-[#c5a059] transition-colors"
