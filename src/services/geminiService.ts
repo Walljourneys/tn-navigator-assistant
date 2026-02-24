@@ -85,7 +85,7 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 
 export const startQnaSession = (): Chat => {
   return ai.chats.create({
-    model: "gemini-1.5-flash", // MODEL AKTIF & STABIL
+    model: "gemini-2.5-flash", // MODEL AKTIF & STABIL
     config: {
       systemInstruction: getSystemPrompt(),
       temperature: 0.7,
