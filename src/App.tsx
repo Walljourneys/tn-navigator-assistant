@@ -1,20 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { startQnaSession, sendMessageStream } from './services/geminiService';
+import { startQnaSession, sendMessage } from './services/geminiService';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Ship, Anchor, User, Plus, Copy, Check, X, Image as ImageIcon } from 'lucide-react';
+import { Send, Ship, Anchor, User, Copy, Check } from 'lucide-react';
 
 export default function App() {
-  const [messages, setMessages] = useState<{ role: string, text: string, image?: string }[]>([]);
+  const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [input, setInput] = useState('');
-  const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   
   const chatSession = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     chatSession.current = startQnaSession();
@@ -34,52 +32,20 @@ export default function App() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSend = async () => {
-    if ((!input.trim() && !image) || !chatSession.current || loading) return;
+    if (!input.trim() || !chatSession.current || loading) return;
 
     const userMsg = input.trim();
-    const userImg = image;
-    
-    setMessages(prev => [...prev, { role: 'user', text: userMsg, image: userImg || undefined }]);
-    
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setInput('');
-    setImage(null);
     setLoading(true);
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
-
-    setMessages(prev => [...prev, { role: 'model', text: '' }]);
 
     try {
-      await sendMessageStream(chatSession.current, userMsg, userImg, (chunk) => {
-        setMessages(prev => {
-          const newMessages = [...prev];
-          const lastMsgIndex = newMessages.length - 1;
-          newMessages[lastMsgIndex] = { 
-            ...newMessages[lastMsgIndex], 
-            text: newMessages[lastMsgIndex].text + chunk 
-          };
-          return newMessages;
-        });
-        setLoading(false);
-      });
+      const response = await sendMessage(chatSession.current, userMsg);
+      setMessages(prev => [...prev, { role: 'model', text: response }]);
     } catch (error) {
-      console.error(error);
-      setMessages(prev => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = { role: 'model', text: 'Waduh bro, radar gue lagi gangguan. Ngopi dulu bentar, coba tanya lagi ya!' };
-        return newMessages;
-      });
+      setMessages(prev => [...prev, { role: 'model', text: 'Waduh bro, radar gangguan. Coba lagi ya!' }]);
+    } finally {
       setLoading(false);
     }
   };
@@ -87,57 +53,34 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#070707] text-gray-100 flex flex-col items-center p-4 font-sans">
       {/* Header */}
-      <div className="w-full max-w-2xl flex items-center justify-between mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl">
+      <div className="w-full max-w-2xl flex items-center justify-between mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="bg-[#c5a059] p-2 rounded-xl shadow-[0_0_15px_rgba(197,160,89,0.3)]">
+          <div className="bg-[#c5a059] p-2 rounded-xl">
             <Ship size={24} className="text-black" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-wider text-[#c5a059]">CAPT. NAVIGATOR</h1>
-            <p className="text-[10px] text-gray-500 font-mono tracking-widest">TN SYSTEM AI V5.7</p>
+            <h1 className="text-xl font-bold text-[#c5a059]">CAPT. NAVIGATOR</h1>
+            <p className="text-[10px] text-gray-500 uppercase">TN System AI V5.7</p>
           </div>
         </div>
         <Anchor size={20} className="text-[#c5a059]/50" />
       </div>
 
-      {/* Chat Container */}
+      {/* Chat Area */}
       <div className="w-full max-w-2xl flex-1 overflow-y-auto space-y-6 px-2 custom-scrollbar" style={{ maxHeight: 'calc(100vh - 250px)' }}>
         <AnimatePresence>
           {messages.map((msg, idx) => (
-            <motion.div 
-              key={idx} 
-              initial={{ opacity: 0, y: 10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
+            <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex gap-3 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-blue-600' : 'bg-[#c5a059]'}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-[#c5a059]'}`}>
                   {msg.role === 'user' ? <User size={18} className="text-white" /> : <Ship size={18} className="text-black" />}
                 </div>
-                
-                <div className={`relative group p-4 rounded-2xl text-sm leading-relaxed backdrop-blur-sm border shadow-xl ${
-                  msg.role === 'user' 
-                  ? 'bg-blue-600/20 border-blue-500/30 text-blue-50 rounded-tr-none' 
-                  : 'bg-white/5 border-white/10 text-gray-200 rounded-tl-none'
-                }`}>
-                  
-                  {msg.image && (
-                    <img src={msg.image} alt="Upload" className="max-w-full h-auto rounded-lg mb-3 border border-white/10" />
-                  )}
-
-                  {/* PERBAIKAN: className dipindah ke div pembungkus */}
-                  <div className="prose prose-invert prose-yellow max-w-none prose-p:leading-relaxed prose-strong:text-[#c5a059] whitespace-pre-wrap">
-                    <Markdown>
-                      {msg.text}
-                    </Markdown>
+                <div className={`relative group p-4 rounded-2xl text-sm border ${msg.role === 'user' ? 'bg-blue-600/20 border-blue-500/30' : 'bg-white/5 border-white/10'}`}>
+                  <div className="prose prose-invert prose-yellow max-w-none whitespace-pre-wrap">
+                    <Markdown>{msg.text}</Markdown>
                   </div>
-
-                  {msg.role === 'model' && msg.text.length > 0 && (
-                    <button 
-                      onClick={() => handleCopy(msg.text, idx)}
-                      className="absolute -bottom-8 right-0 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all opacity-0 group-hover:opacity-100"
-                      title="Salin Pesan"
-                    >
+                  {msg.role === 'model' && (
+                    <button onClick={() => handleCopy(msg.text, idx)} className="absolute -bottom-8 right-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500" />}
                     </button>
                   )}
@@ -146,94 +89,26 @@ export default function App() {
             </motion.div>
           ))}
         </AnimatePresence>
-
-        {loading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-            <div className="bg-white/5 backdrop-blur-md p-3 rounded-xl border border-white/10 flex gap-3 items-center">
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 bg-[#c5a059] rounded-full animate-bounce" />
-                <div className="w-1.5 h-1.5 bg-[#c5a059] rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-1.5 h-1.5 bg-[#c5a059] rounded-full animate-bounce [animation-delay:0.4s]" />
-              </div>
-              <span className="text-[10px] text-gray-500 font-mono tracking-tighter uppercase">Analyzing Market Data...</span>
-            </div>
-          </motion.div>
-        )}
-        
+        {loading && <div className="text-[#c5a059] text-xs animate-pulse">Capt lagi mikir... 🧭</div>}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
+      {/* Input */}
       <div className="w-full max-w-2xl mt-4 pb-4">
-        {image && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative inline-block mb-3 ml-2">
-            <img src={image} alt="Preview" className="w-20 h-20 object-cover rounded-xl border-2 border-[#c5a059]" />
-            <button 
-              onClick={() => setImage(null)}
-              className="absolute -top-2 -right-2 bg-red-500 p-1 rounded-full text-white shadow-lg"
-            >
-              <X size={12} />
-            </button>
-          </motion.div>
-        )}
-
-        <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-[#c5a059]/50 transition-all duration-300">
-          
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2.5 rounded-xl hover:bg-white/10 text-gray-500 hover:text-[#c5a059] transition-colors"
-          >
-            <Plus size={22} />
-          </button>
-          <input 
-            type="file" 
-            hidden 
-            ref={fileInputRef} 
-            accept="image/*" 
-            onChange={handleFileChange} 
-          />
-
+        <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-2">
           <textarea
-            ref={textareaRef}
             rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onInput={() => {
-              if (textareaRef.current) {
-                textareaRef.current.style.height = 'auto';
-                textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Tanya seputar saham atau analisa chart..."
-            className="flex-1 bg-transparent border-none outline-none px-2 py-2 text-sm placeholder:text-gray-600 resize-none custom-scrollbar"
-            style={{ maxHeight: '120px' }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Tanya seputar saham..."
+            className="flex-1 bg-transparent border-none outline-none px-2 py-2 text-sm resize-none"
           />
-
-          <button 
-            onClick={handleSend} 
-            disabled={loading || (!input.trim() && !image)} 
-            className="bg-[#c5a059] hover:bg-[#d4b373] disabled:bg-gray-800 p-2.5 rounded-xl text-black transition-all duration-300 active:scale-95 shadow-[0_0_15px_rgba(197,160,89,0.2)]"
-          >
+          <button onClick={handleSend} disabled={loading || !input.trim()} className="bg-[#c5a059] p-2.5 rounded-xl text-black">
             <Send size={20} />
           </button>
         </div>
-        <p className="text-[9px] text-center mt-3 text-gray-700 tracking-[0.2em] uppercase font-medium">
-          Proprietary Intelligence ©2026 TN SYSTEM
-        </p>
       </div>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(197, 160, 89, 0.2); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(197, 160, 89, 0.4); }
-      `}</style>
     </div>
   );
 }
