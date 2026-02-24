@@ -1,8 +1,9 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
 // PAKAI INI: Biar Vite & Vercel bisa baca kuncinya di Browser
+// Tambahkan (import.meta as any)
 const ai = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY || "" 
+  apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || "" 
 });
 
 const getTodayDate = () => {
