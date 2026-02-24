@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI, ChatSession, GenerateContentResponse } from "@google/generative-ai";
+import { GoogleGenerativeAI, ChatSession } from "@google/generative-ai";
 
-// 1. Inisialisasi menggunakan nama class yang benar: GoogleGenerativeAI
+// 1. Inisialisasi - Pastikan penamaan class-nya konsisten
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "");
 
 const getTodayDate = () => {
@@ -89,7 +89,11 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 `;
 
 export const startQnaSession = (): ChatSession => {
-  // 2. Gunakan genAI.getGenerativeModel
+  // Cek apakah API Key kebaca di browser
+  if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
+    console.error("🚨 KUNCI KAPAL ILANG! API Key nggak kebaca. Cek .env lu!");
+  }
+
   const model = genAI.getGenerativeModel({ 
     model: "gemini-1.5-flash",
     systemInstruction: getSystemPrompt(),
@@ -101,23 +105,33 @@ export const startQnaSession = (): ChatSession => {
   });
 };
 
-export const sendMessageStream = async (chat: any, message: string, image: string | null, onChunk: (text: string) => void) => {
+export const sendMessageStream = async (
+  chat: ChatSession, 
+  message: string, 
+  image: string | null, 
+  onChunk: (text: string) => void
+) => {
   try {
-    const parts: any[] = [message];
-    if (image) parts.push(fileToGenerativePart(image));
+    // Bangun parts: Gambar dulu (kalau ada), baru Teks
+    const parts: any[] = [];
+    if (image) {
+      parts.push(fileToGenerativePart(image));
+    }
+    parts.push(message);
 
-    // Pastiin chat session-nya ada
-    if (!chat) throw new Error("Chat session pingsan, Bro!");
-
+    // KIRIM LANGSUNG ARRAY PARTS
     const result = await chat.sendMessageStream(parts);
     
+    // LOOPING STREAM
     for await (const chunk of result.stream) {
       const chunkText = chunk.text();
-      if (chunkText) onChunk(chunkText);
+      if (chunkText) {
+        onChunk(chunkText); 
+      }
     }
   } catch (error: any) {
-    // INI PENTING: Liat di F12 Console browser lu tulisan merahnya apa
-    console.error("ALASAN CAPT MOGOK:", error);
+    // LIAT DI F12 CONSOLE: Ini bakal kasih tau kenapa dia mogok
+    console.error("🚨 ALASAN CAPT MOGOK:", error.message || error);
     onChunk("Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!");
   }
 };
