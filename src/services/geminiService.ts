@@ -85,13 +85,15 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 `;
 
 export const startQnaSession = (): Chat => {
-  return ai.chats.create({
-    model: "gemini-1.5-flash", // Versi stabil & cepat
+  const chat = ai.chats.create({
+    // GANTI baris ini, jangan Gemini 3!
+    model: "gemini-1.5-flash", 
     config: {
       systemInstruction: getSystemPrompt(),
       temperature: 0.7,
     },
   });
+  return chat;
 };
 
 export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
