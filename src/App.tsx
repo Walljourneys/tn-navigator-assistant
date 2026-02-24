@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { startQnaSession, sendMessage } from './services/geminiService';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Ship, Anchor, User, Copy, Check } from 'lucide-react';
+import { Send, Ship, Anchor, User, Copy, Check, ExternalLink } from 'lucide-react';
 
 export default function App() {
   const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
@@ -88,15 +88,23 @@ export default function App() {
                 <div className={`relative group p-4 rounded-2xl text-sm leading-relaxed border backdrop-blur-sm ${
                   msg.role === 'user' ? 'bg-blue-600/20 border-blue-500/30' : 'bg-white/5 border-white/10'
                 }`}>
-                  {/* FIX: Hapus whitespace-pre-wrap karena bentrok dengan Markdown */}
                   <div className="prose prose-invert prose-yellow max-w-none">
-                    <Markdown>{msg.text}</Markdown>
+                    <Markdown 
+                      components={{
+                        // Pastikan link terbuka di tab baru dan punya gaya khusus
+                        a: ({node, ...props}) => (
+                          <a {...props} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5" />
+                        )
+                      }}
+                    >
+                      {msg.text}
+                    </Markdown>
                   </div>
 
                   {msg.role === 'model' && (
                     <button 
                       onClick={() => handleCopy(msg.text, idx)}
-                      className="absolute -top-2 -right-2 p-1.5 bg-black border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-xl"
+                      className="absolute -top-2 -right-2 p-1.5 bg-black border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-xl z-10"
                     >
                       {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500 hover:text-[#c5a059]" />}
                     </button>
@@ -117,7 +125,7 @@ export default function App() {
 
       {/* INPUT AREA */}
       <div className="w-full max-w-2xl mt-4 pb-4">
-        <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-2 focus-within:border-[#c5a059]/50 transition-all">
+        <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-2 focus-within:border-[#c5a059]/50 transition-all shadow-2xl">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -146,10 +154,25 @@ export default function App() {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(197, 160, 89, 0.2); border-radius: 10px; }
-        /* Perbaikan spasi antar paragraf di Markdown */
-        .prose p { margin-bottom: 0.75rem !important; margin-top: 0.75rem !important; }
+        
+        /* Perbaikan spasi antar paragraf & Gaya Link */
+        .prose p { margin-bottom: 0.8rem !important; margin-top: 0.8rem !important; line-height: 1.6; }
         .prose p:first-child { margin-top: 0 !important; }
         .prose p:last-child { margin-bottom: 0 !important; }
+        
+        /* Styling Link agar Klik-able & Gold */
+        .prose a { 
+          color: #c5a059 !important; 
+          text-decoration: underline !important; 
+          text-underline-offset: 2px;
+          font-weight: 600; 
+          transition: all 0.2s;
+        }
+        .prose a:hover { 
+          color: #d4b373 !important; 
+          opacity: 0.8;
+        }
+        .prose strong { color: #c5a059; font-weight: 700; }
       `}</style>
     </div>
   );
