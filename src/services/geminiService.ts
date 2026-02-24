@@ -88,7 +88,8 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 
 export const startQnaSession = (): Chat => {
   return ai.chats.create({
-    model: "gemini-2.5-flash", 
+    // GANTI KE SINI BUAT POWER MAKSIMAL
+    model: "gemini-3-flash-preview", 
     config: {
       systemInstruction: getSystemPrompt(),
       temperature: 0.7,
