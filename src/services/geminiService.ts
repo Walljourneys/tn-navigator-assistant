@@ -1,7 +1,7 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
 // Initialize GoogleGenAI with the API key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 /**
  * Fungsi untuk mengambil tanggal hari ini secara dinamis.
@@ -16,8 +16,19 @@ const getTodayDate = () => {
   });
 };
 
+/**
+ * Fungsi Helper untuk mengonversi gambar Base64 ke format yang dimengerti Gemini.
+ */
+function fileToGenerativePart(base64Str: string) {
+  return {
+    inlineData: {
+      data: base64Str.split(",")[1],
+      mimeType: base64Str.split(",")[0].split(":")[1].split(";")[0]
+    },
+  };
+}
+
 // System prompt for Capt. Navigator
-// Kita gunakan fungsi agar tanggal selalu update setiap ada chat baru
 const getSystemPrompt = () => `
 ROLE: Kamu adalah "Capt. Navigator", Asisten AI resmi dari TN System by Wangtobo (Trade Navigation System).
 WAKTU SEKARANG: ${getTodayDate()} (Tahun 2026).
@@ -90,16 +101,45 @@ Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika 
 
 // Function to start a new chat session
 export const startQnaSession = (): Chat => {
-  const chat = ai.chats.create({
-    model: "gemini-3-flash-preview", 
+  return ai.chats.create({
+    model: "gemini-1.5-flash", // Menggunakan 1.5-flash yang sangat stabil untuk Vision & Streaming
     config: {
-      systemInstruction: getSystemPrompt(), // Menggunakan fungsi agar prompt dapet tanggal terbaru
+      systemInstruction: getSystemPrompt(),
       temperature: 0.7,
     },
   });
-  return chat;
 };
 
+/**
+ * FUNGSI UTAMA BARU: Mengirim pesan dengan dukungan Streaming dan Gambar (Vision).
+ */
+export const sendMessageStream = async (
+  chat: Chat, 
+  message: string, 
+  image: string | null, 
+  onChunk: (text: string) => void
+) => {
+  try {
+    let parts: any[] = [message];
+    
+    // Jika ada gambar, masukkan ke dalam parts sebagai generative part
+    if (image) {
+      parts.push(fileToGenerativePart(image));
+    }
+
+    const result = await chat.sendMessageStream(parts);
+    
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      onChunk(chunkText); // Mengirim potongan teks ke UI secara real-time
+    }
+  } catch (error) {
+    console.error("Error streaming message:", error);
+    onChunk("Waduh bro, error radar gue, ngopi dulu sebentar.... Coba ulangi pertanyaanya ya!");
+  }
+};
+
+// Tetap pertahankan fungsi lama agar tidak merusak UI yang sekarang sebelum di-update
 export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
   try {
     const result: GenerateContentResponse = await chat.sendMessage({ message });
