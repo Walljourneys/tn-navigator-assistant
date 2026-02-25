@@ -35,7 +35,7 @@ export default function App() {
   // --- FUNGSI BARU: DOWNLOAD CHAT ---
   const handleDownloadChat = () => {
     const chatText = messages.map(msg => {
-      const sender = msg.role === 'user' ? 'Boss Wangtobo' : 'Capt. Navigator';
+      const sender = msg.role === 'user' ? 'Member' : 'Capt. Navigator';
       return `[${sender}]:\n${msg.text}\n`;
     }).join('\n========================================\n\n');
 
