@@ -1,9 +1,15 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
+import { createClient } from '@supabase/supabase-js'; // <-- Tambahan
 
 // PAKAI INI: Biar Vite & Vercel bisa baca kuncinya di Browser
 const ai = new GoogleGenAI({ 
   apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || "" 
 });
+
+// SETUP SUPABASE
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || "";
+const supabaseKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const getTodayDate = () => {
   return new Date().toLocaleDateString('id-ID', { 
@@ -114,7 +120,21 @@ export const startQnaSession = (): Chat => {
 export const sendMessage = async (chat: Chat, message: string): Promise<string> => {
   try {
     const result: GenerateContentResponse = await chat.sendMessage({ message });
-    return result.text || "";
+    const aiResponse = result.text || "";
+
+    // --- MULAI LOGGING KE DATABASE PRIBADI LU ---
+    // Kita simpen ke Supabase di background biar aplikasi member lu nggak jadi lemot pas loading
+    supabase.from('chat_logs').insert([
+      { 
+        user_input: message, 
+        ai_response: aiResponse 
+      }
+    ]).then(({ error }) => {
+      if (error) console.error("Gagal nyimpen log chat:", error);
+    });
+    // --- SELESAI LOGGING ---
+
+    return aiResponse;
   } catch (error) {
     console.error("Error Radar:", error);
     return "Waduh bro, radar lagi gangguan. Coba ulangi lagi pertanyaanya ya!";
