@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { startQnaSession, sendMessage } from './services/geminiService';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Ship, Anchor, User, Copy, Check, ExternalLink } from 'lucide-react';
+import { Send, Ship, Anchor, User, Copy, Check, Download } from 'lucide-react'; // <-- Tambah import Download
 
 export default function App() {
   const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
@@ -32,6 +32,27 @@ export default function App() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
+  // --- FUNGSI BARU: DOWNLOAD CHAT ---
+  const handleDownloadChat = () => {
+    const chatText = messages.map(msg => {
+      const sender = msg.role === 'user' ? 'Boss Wangtobo' : 'Capt. Navigator';
+      return `[${sender}]:\n${msg.text}\n`;
+    }).join('\n========================================\n\n');
+
+    const blob = new Blob([chatText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.download = `Laporan-Navigasi-${dateStr}.txt`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  // ----------------------------------
+
   const handleSend = async () => {
     if (!input.trim() || !chatSession.current || loading) return;
     const userMsg = input.trim();
@@ -45,7 +66,7 @@ export default function App() {
       const response = await sendMessage(chatSession.current, userMsg);
       setMessages(prev => [...prev, { role: 'model', text: response }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: 'Error radar, Bro! Coba lagi.' }]);
+      setMessages(prev => [...prev, { role: 'model', text: 'Waduh bro, radar lagi gangguan. Coba ulangi lagi pertanyaanya ya!' }]);
     } finally {
       setLoading(false);
     }
@@ -65,7 +86,18 @@ export default function App() {
             <p className="text-[10px] text-gray-500 font-mono tracking-widest">TN SYSTEM V5.7</p>
           </div>
         </div>
-        <Anchor size={20} className="text-[#c5a059]/30" />
+        
+        {/* TOMBOL DOWNLOAD DI KANAN ATAS */}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleDownloadChat} 
+            title="Save as .txt"
+            className="text-gray-400 hover:text-[#c5a059] transition-colors"
+          >
+            <Download size={20} />
+          </button>
+          <Anchor size={20} className="text-[#c5a059]/30" />
+        </div>
       </div>
 
       {/* CHAT AREA */}
@@ -85,13 +117,12 @@ export default function App() {
                 </div>
 
                 {/* BUBBLE */}
-                <div className={`relative group p-4 rounded-2xl text-sm leading-relaxed border backdrop-blur-sm ${
+                <div className={`relative flex flex-col p-4 rounded-2xl text-sm leading-relaxed border backdrop-blur-sm ${
                   msg.role === 'user' ? 'bg-blue-600/20 border-blue-500/30' : 'bg-white/5 border-white/10'
                 }`}>
                   <div className="prose prose-invert prose-yellow max-w-none">
                     <Markdown 
                       components={{
-                        // Pastikan link terbuka di tab baru dan punya gaya khusus
                         a: ({node, ...props}) => (
                           <a {...props} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5" />
                         )
@@ -101,14 +132,19 @@ export default function App() {
                     </Markdown>
                   </div>
 
-                  {msg.role === 'model' && (
+                  {/* TOMBOL COPY DI BAWAH TEKS (UNTUK USER & AI) */}
+                  <div className="flex justify-end mt-3 pt-2 border-t border-white/5">
                     <button 
                       onClick={() => handleCopy(msg.text, idx)}
-                      className="absolute -top-2 -right-2 p-1.5 bg-black border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-xl z-10"
+                      className="flex items-center gap-1.5 text-[11px] text-gray-500 hover:text-[#c5a059] transition-colors"
                     >
-                      {copiedIndex === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-500 hover:text-[#c5a059]" />}
+                      {copiedIndex === idx ? (
+                        <><Check size={12} className="text-green-500" /> <span className="text-green-500">Tersalin</span></>
+                      ) : (
+                        <><Copy size={12} /> Salin Teks</>
+                      )}
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -155,12 +191,10 @@ export default function App() {
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(197, 160, 89, 0.2); border-radius: 10px; }
         
-        /* Perbaikan spasi antar paragraf & Gaya Link */
         .prose p { margin-bottom: 0.8rem !important; margin-top: 0.8rem !important; line-height: 1.6; }
         .prose p:first-child { margin-top: 0 !important; }
         .prose p:last-child { margin-bottom: 0 !important; }
         
-        /* Styling Link agar Klik-able & Gold */
         .prose a { 
           color: #c5a059 !important; 
           text-decoration: underline !important; 
