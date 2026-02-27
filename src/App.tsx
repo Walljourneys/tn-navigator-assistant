@@ -87,7 +87,7 @@ export default function App() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <p className="text-[10px] text-gray-400 font-mono tracking-widest">SYSTEM ONLINE • V5.7</p>
+              <p className="text-[10px] text-gray-400 font-mono tracking-widest">SYSTEM ONLINE • IDX ULTIMATE V5.7</p>
             </div>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function App() {
               }
             }}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="Tanya seputar saham, minta analisa, atau ketik Master Key..."
+            placeholder="Ketik pertanyaan seputar saham, bedah emiten, atau edukasi market..."
             className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm resize-none custom-scrollbar text-gray-100 placeholder-gray-600"
           />
           <motion.button 
