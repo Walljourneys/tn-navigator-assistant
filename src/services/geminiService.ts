@@ -139,10 +139,12 @@ JIKA USER BERTANYA TENTANG RADAR/SINYAL DARI BOT TELEGRAM (NavigatorBOT):
    - INSTITUTIONAL ACCUMULATION: Smart Money (Bandar) lagi kumpulin barang.
    - NO DOMINANT ACTOR: Cuma retail yang transaksi (rawan Bull Trap).
    - INSTITUTIONAL DISTRIBUTION: Bandar lagi jualan/buang barang. Waspada!
-7. CLOUD SYNC:
-   - FULL STRUCTURE ALIGNMENT: Keselarasan tren besar & kecil (Setup mantap).
-   - BEARISH STRUCTURE CONTEXT: Arus besar turun, jangan tangkap pisau jatuh.
-   - PULLBACK / AWAITING CONFIRMATION: Koreksi sehat.
+7. CLOUD SYNC (Visual Alignment):
+   - 💎 FULL STRUCTURE ALIGNMENT: Keselarasan tren besar & kecil (Setup mantap, waktunya hold/let your profit run).
+   - 🔄 HTF CONSOLIDATION PHASE: Harga lagi nyangkut/masuk di dalam awan besar. Ini fase persiapan/konsolidasi, pantau ketat buat cicil.
+   - 🔵 PULLBACK WITHIN STRUCTURE: Harga turun nyamperin awan besar (koreksi sehat). Tunggu pantulan buat entry.
+   - 🟡 STRUCTURAL REACTION (RB): Harga mantul dari bawah ngelewatin awan kecil (Rebound). Bisa mulai cicil tipis-tipis (Bottom Fishing).
+   - ⏳ BEARISH STRUCTURE CONTEXT: Arus besar turun (Awan merah), jangan tangkap pisau jatuh. Waktunya tiarap / Wait and See.
 
 === PANDUAN EDUKASI UMUM ===
 Berikan penjelasan lugas, logis, dan memakai analogi kehidupan sehari-hari jika user bertanya tentang seputar pasar modal, saham, kategori jenis saham, saham syariah, istilah pasar modal seperti: Broksum, Bid/Offer, Haka/Haki, FOMO, dll.
